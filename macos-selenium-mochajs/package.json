@@ -1,0 +1,17 @@
+{
+  "name": "macos-selenium-mochajs",
+  "version": "1.0.0",
+  "description": "A template for reproducing ChromeDriver bugs on macOS with Selenium and MochaJS.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test.js"
+  },
+  "keywords": [],
+  "author": "Alex N. Jose (alexnj@google.com)",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
+    "selenium-webdriver": "^4.22.0"
+  }
+}
