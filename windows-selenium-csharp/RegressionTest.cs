@@ -45,7 +45,7 @@ public class Tests
                 <title>Download Test</title>
             </head>
             <body>
-                <a id=\"downloadLink\" href=\"data:text/plain;base64,SGVsbG8sIFdvcmxkIQ==\" download=\"{DownloadedFileName}\">Download File</a>
+                <a id=""downloadLink"" href=""data:text/plain;base64,SGVsbG8sIFdvcmxkIQ=="" download=""{DownloadedFileName}"">Download File</a>
             </body>
             </html>";
         htmlFilePath = Path.Combine(Path.GetTempPath(), $"download-test-{DateTime.Now.Ticks}.html");
