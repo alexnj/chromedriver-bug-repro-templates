@@ -95,7 +95,7 @@ public class Tests
         var downloadedFilePath = Path.Combine(downloadsFolderPath, DownloadedFileName);
 
         // Navigate to the local HTML file
-        driver.Navigate().GoToUrl($"file:///{htmlFilePath.Replace('\', '/')}");
+        driver.Navigate().GoToUrl($"file:///{{htmlFilePath.Replace('\', '/')}}");
 
         // Click the download link
         var downloadLink = driver.FindElement(By.Id("downloadLink"));
