@@ -48,7 +48,7 @@ public class Tests
                 <a id=""downloadLink"" href=""data:text/plain;base64,SGVsbG8sIFdvcmxkIQ=="" download=""{DownloadedFileName}"">Download File</a>
             </body>
             </html>";
-        htmlFilePath = Path.Combine(Path.GetTempPath(), $"download-test-{DateTime.Now.Ticks}.html");
+        htmlFilePath = Path.Combine(Path.GetTempPath(), $"download-test.html");
         File.WriteAllText(htmlFilePath, htmlContent);
 
         var options = new ChromeOptions();
@@ -61,7 +61,7 @@ public class Tests
         options.AddUserProfilePreference("directory_upgrade", true);
 
         var service = ChromeDriverService.CreateDefaultService();
-        service.LogPath = "chromedriver.log";
+        service.LogPath = "d:\\chromedriver.log";
         service.EnableVerboseLogging = true;
 
         driver = new ChromeDriver(service, options);
@@ -71,6 +71,8 @@ public class Tests
     public void TearDown()
     {
         driver.Quit();
+        (driver as IDisposable)?.Dispose();
+        driver.Dispose();
         // Clean up temporary files and directories
         if (Directory.Exists(downloadsFolderPath))
         {
@@ -95,7 +97,7 @@ public class Tests
         var downloadedFilePath = Path.Combine(downloadsFolderPath, DownloadedFileName);
 
         // Navigate to the local HTML file
-        driver.Navigate().GoToUrl($"file:///{{htmlFilePath.Replace('\', '/')}}");
+        driver.Navigate().GoToUrl("file://" + htmlFilePath.Replace('\\', '/'));
 
         // Click the download link
         var downloadLink = driver.FindElement(By.Id("downloadLink"));
