@@ -38,7 +38,7 @@ public class Tests
         Directory.CreateDirectory(downloadsFolderPath);
 
         // Create a local HTML file with a download link
-        var htmlContent = $"\
+        var htmlContent = $@"
             <!DOCTYPE html>
             <html>
             <head>
