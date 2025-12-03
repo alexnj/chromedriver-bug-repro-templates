@@ -20,6 +20,10 @@ RSpec.describe 'ChromeDriver Network Conditions Regression' do
     options = Selenium::WebDriver::Options.chrome
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
+    # By default, the test uses the latest stable Chrome version.
+    # Replace the "stable" with the specific browser version if needed,
+    # e.g. 'canary', '115' or '144.0.7534.0' for example.
+    options.browser_version = 'stable'
     service = Selenium::WebDriver::Service.chrome(args: ['--verbose', '--log-path=chromedriver.log'])
     driver = Selenium::WebDriver.for :chrome, options: options, service: service
 
