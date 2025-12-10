@@ -20,45 +20,55 @@ const chrome = require('selenium-webdriver/chrome');
 
 describe('Selenium ChromeDriver', function () {
   let driver;
-  // The chrome and chromedriver installation can take some time. 
+  // The chrome and chromedriver installation can take some time.
   // Give 5 minutes to install everything.
   this.timeout(5 * 60 * 1000);
 
-  beforeEach(async function () {
-    const options = new chrome.Options();
-    options.addArguments('--headless');
-    options.addArguments('--no-sandbox');
+  afterEach(async function () {
+    if (driver) {
+      await driver.quit();
+    }
+  });
 
-    // By default, the test uses the latest stable Chrome version.
-    // Replace the "stable" with the specific browser version if needed,
-    // e.g. 'canary', '115' or '144.0.7534.0' for example.
-    options.setBrowserVersion('stable');
+  /**
+   * This test tries to open a second browser window when one is already open.
+   * Based on the bug report, this should fail.
+   * The test is written to expect success, so it will fail if the bug is present.
+   */
+  it('should be able to create two Chrome instances', async function () {
+    const options = new chrome.Options();
+    options.addArguments('--no-sandbox');
+    // From the bug report, this flag seems to trigger the issue.
+    options.addArguments('--remote-debugging-port=0');
+    options.setBrowserVersion('143.0.7499.40');
 
     const service = new chrome.ServiceBuilder()
       .loggingTo('chromedriver.log')
       .enableVerboseLogging();
 
+    // First driver instance
     driver = await new Builder()
       .forBrowser('chrome')
       .setChromeOptions(options)
       .setChromeService(service)
       .build();
-  });
-
-  afterEach(async function () {
-    await driver.quit();
-  });
-
-  /**
-   * This test is intended to verify the setup is correct.
-   */
-  it('should be able to navigate to google.com', async function () {
     await driver.get('https://www.google.com');
-    const title = await driver.getTitle();
-    expect(title).toBe('Google');
-  });
+    expect(await driver.getTitle()).toBe('Google');
 
-  it('ISSUE REPRODUCTION', async function () {
-    // Add test reproducing the issue here.
+    // Second driver instance, this is expected to fail with the bug.
+    let driver2;
+    try {
+      driver2 = await new Builder()
+        .forBrowser('chrome')
+        .setChromeOptions(options)
+        .setChromeService(service)
+        .build();
+      await driver2.get('https://www.bing.com');
+      expect(await driver2.getTitle()).toContain('Bing');
+    } finally {
+      if (driver2) {
+        await driver2.quit();
+      }
+    }
   });
 });
