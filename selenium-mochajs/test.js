@@ -40,7 +40,7 @@ describe('Selenium ChromeDriver', function () {
     options.addArguments('--no-sandbox');
     // From the bug report, this flag seems to trigger the issue.
     options.addArguments('--remote-debugging-port=0');
-    options.setBrowserVersion('143.0.7499.40');
+    options.setBrowserVersion('143.0.7499.41');
 
     const service = new chrome.ServiceBuilder()
       .loggingTo('chromedriver.log')
