@@ -40,7 +40,7 @@ def driver():
     # By default, the test uses the latest stable Chrome version.
     # Replace the "stable" with the specific browser version if needed,
     # e.g. 'canary', '115' or '144.0.7534.0' for example.
-    browser_version = "143.0.7499.146"
+    browser_version = "stable"
 
     print(f"Using Selenium version: {selenium.__version__}")
     assert int(selenium.__version__.split('.')[0]) >= 4, "Selenium version 4 or above is required."
