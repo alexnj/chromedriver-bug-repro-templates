@@ -1,7 +1,19 @@
+[project]
+name = "selenium-python"
+version = "0.1.0"
+dependencies = [
+    "selenium",
+    "pytest"
+]
+
 [tool.black]
 line-length = 88
 target-version = ['py38']
+
 [tool.ruff]
 line-length = 88
 select = ["E", "F", "W", "I", "UP", "B", "A", "C4", "T20", "SIM", "ARG"]
 ignore = ["E501"]
+
+[tool.pytest.ini_options]
+python_files = "test.py"

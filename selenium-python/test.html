@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shadow DOM + Iframe Test</title>
+</head>
+
+<body>
+  <div id="shadow-host"></div>
+
+  <script>
+    const shadowHost = document.getElementById('shadow-host');
+    const shadowRoot = shadowHost.attachShadow({mode: 'closed'});
+
+    shadowRoot.innerHTML = `
+        <div style="padding: 20px; border: 2px solid blue;">
+            <p>Inside OPEN Shadow Root</p>
+            <div id="iframe-container"></div>
+        </div>
+    `;
+
+    const iframe = document.createElement('iframe');
+    iframe.id = 'nested-iframe';
+    iframe.style.cssText = 'width: 300px; height: 150px; border: none;';
+
+    const iframeContainer = shadowRoot.getElementById('iframe-container');
+    iframeContainer.appendChild(iframe);
+
+    iframe.contentDocument.body.innerHTML = `
+        <div style="padding: 20px; border: 2px solid green;">
+            <p>Inside IFRAME</p>
+            <button id="alert-button" onclick="alert('Button clicked!')">Click Me!</button>
+        </div>
+    `;
+  </script>
+</body>
+
+</html>

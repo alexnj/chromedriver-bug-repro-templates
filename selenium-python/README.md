@@ -31,11 +31,12 @@ The test script (`test.py`) performs the following actions:
 - Have the appropriate version of Python installed.
 - Install the necessary dependencies:
   ```bash
-  pip install -r requirements.txt
+  python3 -m pip install -r requirements.txt --index-url https://pypi.org/simple/
   ```
 - To run the tests with the default configuration (latest Chrome Stable):
   ```bash
-  pytest test.py
+  # Add -s to to get console logs.
+  python3 -m pytest -vv test.py
   ```
 
 ## Customizing the Test
