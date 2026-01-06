@@ -8,7 +8,24 @@ from mitmproxy.tools.dump import DumpMaster
 PORT = 8080
 
 # Configure logging for better visibility
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Create a logger
+logger = logging.getLogger()
+logger.setLevel(logging.INFO) # Set the minimum logging level
+
+# Formatter for log messages
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
+# File handler for INFO and above (stdout equivalent)
+info_file_handler = logging.FileHandler('mitm_proxy_server_stdout.log')
+info_file_handler.setLevel(logging.INFO)
+info_file_handler.setFormatter(formatter)
+logger.addHandler(info_file_handler)
+
+# File handler for ERROR and above (stderr equivalent)
+error_file_handler = logging.FileHandler('mitm_proxy_server_stderr.log')
+error_file_handler.setLevel(logging.ERROR)
+error_file_handler.setFormatter(formatter)
+logger.addHandler(error_file_handler)
 
 class SimpleHTTPLogger:
     """
