@@ -1,3 +1,4 @@
+mitmproxy
 selenium
 pytest
 pytest-timeout

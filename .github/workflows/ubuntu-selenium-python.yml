@@ -51,3 +51,7 @@ jobs:
     - name: Dump log
       if: always()
       run: cat chromedriver.log
+    
+    - name: Dump proxy log
+      if: always()
+      run: cat mitm_proxy_server_stdout.log
