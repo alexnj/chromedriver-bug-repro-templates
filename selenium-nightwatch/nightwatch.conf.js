@@ -10,7 +10,8 @@ module.exports = {
         port: 9515, // Default ChromeDriver port
         server_path: require('chromedriver').path,
         cli_args: [
-          '--silent'
+          '--verbose',
+          '--log-path=chromedriver.log'
         ],
       },
       desiredCapabilities: {
