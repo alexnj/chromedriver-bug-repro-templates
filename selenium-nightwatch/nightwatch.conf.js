@@ -12,7 +12,6 @@ module.exports = {
         cli_args: [
           '--silent'
         ],
-        log_path: 'chromedriver.log',
       },
       desiredCapabilities: {
         browserName: 'chrome',

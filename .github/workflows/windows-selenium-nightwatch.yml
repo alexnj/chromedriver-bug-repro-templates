@@ -46,6 +46,15 @@ jobs:
     - name: Run tests
       working-directory: selenium-nightwatch
       run: npm test
+    
+    - name: Upload logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: logs
+        path: |
+          logs/
+          tests_output/
 
     - name: Dump log
       if: always()
