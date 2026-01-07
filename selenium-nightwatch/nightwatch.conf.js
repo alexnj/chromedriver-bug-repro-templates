@@ -46,7 +46,7 @@ module.exports = {
         browserName: 'chrome',
         chromeOptions: {
           args: [
-            // '--headless' // Uncomment for headless mode
+            '--headless' // Uncomment for headless mode
           ]
         }
       }
