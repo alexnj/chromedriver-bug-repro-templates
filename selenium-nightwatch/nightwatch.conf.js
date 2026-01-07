@@ -18,8 +18,8 @@ module.exports = {
         res.writeHead(200, { 'Content-Type': 'text/html' });
         res.end(content);
       });
-    }).listen(8000, 'localhost', () => {
-      console.log('Server started on port 8000');
+    }).listen(8080, '127.0.0.1', () => {
+      console.log('Server started on port 8080');
       done();
     });
   },
@@ -33,7 +33,7 @@ module.exports = {
 
   test_settings: {
     default: {
-      launch_url: 'http://localhost:8000',
+      launch_url: 'http://127.0.0.1:8080',
       webdriver: {
         start_process: true,
         port: 9515, // Default ChromeDriver port
