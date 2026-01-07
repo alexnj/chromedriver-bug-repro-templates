@@ -4,9 +4,7 @@
   "description": "A template for reproducing ChromeDriver bugs on macOS with Selenium and Nightwatch.",
   "main": "index.js",
   "scripts": {
-    "pretest": "node server.js > server.log 2>&1 & echo $! > server.pid",
     "test": "nightwatch test.js",
-    "posttest": "kill $(cat server.pid)",
     "format": "prettier --write test.js"
   },
   "keywords": [],
