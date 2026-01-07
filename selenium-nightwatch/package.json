@@ -1,0 +1,24 @@
+{
+  "name": "macos-selenium-nightwatch",
+  "version": "1.0.0",
+  "description": "A template for reproducing ChromeDriver bugs on macOS with Selenium and Nightwatch.",
+  "main": "index.js",
+  "scripts": {
+    "test": "nightwatch test.js",
+    "format": "prettier --write test.js"
+  },
+  "keywords": [],
+  "author": "Alex N. Jose (alexnj@google.com)",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@nightwatch/selenium-server": "^4.20.0",
+    "chai": "^4.3.7",
+    "chromedriver": "^143.0.4",
+    "expect": "^30.2.0",
+    "nightwatch": "^3.14.0",
+    "selenium-webdriver": "^4.38.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.7.3"
+  }
+}
