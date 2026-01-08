@@ -53,6 +53,21 @@ def test_should_be_able_to_navigate_to_google_com(driver):
 
 
 @pytest.mark.timeout(TIMEOUT)
-def test_issue_reproduction(driver):
-    """Add test reproducing the issue here."""
-    pass
+def test_driver_should_not_crash_on_error(driver):
+    """
+    This test reproduces the bug where ChromeDriver crashes when any command returns an error.
+    1. Navigate to a non-resolvable domain to intentionally trigger an error.
+    2. After the error, attempt a basic driver command (get title).
+    If the driver has crashed due to the previous error, this subsequent command will fail.
+    The test is expected to fail if the bug is present.
+    """
+    try:
+        driver.get("https://unresolvable")
+    except Exception:
+        # Expecting an error due to unresolvable domain, but ChromeDriver should not crash.
+        pass
+
+    # This command will fail if chromedriver has crashed after the previous error.
+    # The expected behavior is that the driver remains responsive.
+    driver.get("about:blank") # Navigate to a blank page to reset the state after the error
+    assert driver.title == "" # Check if the driver is still responsive
