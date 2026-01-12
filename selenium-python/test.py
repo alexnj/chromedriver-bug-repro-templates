@@ -31,8 +31,9 @@ def driver():
     browser_version = "stable"
 
     options = Options()
-    options.add_argument("--headless")
+    # options.add_argument("--headless")
     options.add_argument("--no-sandbox")
+    # options.add_argument("--remote-debugging-port=9222")
     options.browser_version = browser_version
 
     service = Service(service_args=["--log-path=chromedriver.log", "--verbose"])
@@ -54,5 +55,32 @@ def test_should_be_able_to_navigate_to_google_com(driver):
 
 @pytest.mark.timeout(TIMEOUT)
 def test_issue_reproduction(driver):
-    """Add test reproducing the issue here."""
-    pass
+    """
+    This test reproduces the bug where a new tab is created in the primary window
+    instead of the current window.
+    """
+    # 1. Open the initial window and navigate to Google.
+    driver.get("https://www.google.com")
+    initial_window_handle = driver.current_window_handle
+    first_window_info = driver.execute_cdp_cmd("Browser.getWindowForTarget", {})
+
+    # 2. Open a new tab and navigate to about.google.com
+    driver.switch_to.new_window("tab")
+    driver.get("https://about.google.com")
+
+    # 3. Open a new window and navigate to maps.google.com.
+    driver.switch_to.new_window("window")
+    driver.get("https://maps.google.com")
+    new_window_handle = driver.current_window_handle
+    second_window_info = driver.execute_cdp_cmd("Browser.getWindowForTarget", {})
+
+    # 4. Open a new tab and navigate to photos.google.com.
+    driver.switch_to.new_window("tab")
+    driver.get("https://photos.google.com")
+
+    last_tab_info = driver.execute_cdp_cmd("Browser.getWindowForTarget", {})
+    logging.info(f"Window Info for new window: {{window_info}}")
+
+
+    assert last_tab_info["windowId"] != first_window_info["windowId"], "New tab was opened in first window"
+    assert last_tab_info["windowId"] == second_window_info["windowId"], "New tab was not opened in second window"
