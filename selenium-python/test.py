@@ -31,7 +31,7 @@ def driver():
     browser_version = "stable"
 
     options = Options()
-    # options.add_argument("--headless")
+    options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     # options.add_argument("--remote-debugging-port=9222")
     options.browser_version = browser_version
