@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Selenium Mocha.js
+name: Windows Selenium MochaJS
 
 on:
   push:
     paths:
       - 'selenium-mochajs/**'
-      - '.github/workflows/macos-selenium-mochajs.yml'
+      - '.github/workflows/windows-selenium-mochajs.yml'
   pull_request:
     paths:
       - 'selenium-mochajs/**'
-      - '.github/workflows/macos-selenium-mochajs.yml'
+      - '.github/workflows/windows-selenium-mochajs.yml'
 
 defaults:
   run:
@@ -30,27 +30,32 @@ defaults:
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+    runs-on: windows-latest 
+    strategy: 
+      fail-fast: false 
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4 
 
     - name: Set up Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4 
       with:
-        node-version: 'latest'
+        node-version: '20' 
 
     - name: Install dependencies
       working-directory: selenium-mochajs
       run: npm install
 
-    - name: Run tests
+    - name: Run Mocha tests 
       working-directory: selenium-mochajs
       run: npm test
+
+    - name: Upload bug reproduction artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: capture-txt
+        path: selenium-mochajs/capture.txt
 
     - name: Dump log
       if: always()
