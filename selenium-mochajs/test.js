@@ -132,7 +132,29 @@ describe('Issue 496255939 Reproduction', function () {
       const success2 = injectPolicy('ShowHomeButton', 'true');
       
       if (!success1 || !success2) {
-          throw new Error("Failed to find policy input elements in the DOM.");
+          // Dump the DOM structure to debug
+          function getDomTree(root, indent = '') {
+            let tree = '';
+            const children = root.children || [];
+            for (let i = 0; i < children.length; i++) {
+              const el = children[i];
+              tree += indent + '<' + el.tagName.toLowerCase();
+              if (el.id) tree += ' id="' + el.id + '"';
+              if (el.className) tree += ' class="' + el.className + '"';
+              if (el.type) tree += ' type="' + el.type + '"';
+              if (el.placeholder) tree += ' placeholder="' + el.placeholder + '"';
+              tree += '>\\n';
+              
+              if (el.shadowRoot) {
+                 tree += indent + '  [SHADOW ROOT]\\n';
+                 tree += getDomTree(el.shadowRoot, indent + '    ');
+              }
+              tree += getDomTree(el, indent + '  ');
+            }
+            return tree;
+          }
+          const dom = getDomTree(document.body);
+          throw new Error("Failed to find policy input elements in the DOM.\\nDOM Dump:\\n" + dom);
       }
 
       // Check the Apply box, which is in the main document
