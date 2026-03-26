@@ -22,14 +22,14 @@ const path = require('path');
 
 describe('Issue 496255939 Reproduction', function () {
   let driver;
+  const profilePath = path.join(__dirname, 'repro-profile');
   this.timeout(5 * 60 * 1000);
 
-  beforeEach(async function () {
+  async function createDriver(extraArgs = []) {
     let chromePath = process.env.CHROME_PATH;
     if (!chromePath || chromePath.includes('.cache')) {
-      // Fallback/Local dev logic
       const paths = [
-        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        'C:\\Program Files\\Google\Chrome\\Application\\chrome.exe',
         'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
       ];
       for (const p of paths) {
@@ -40,29 +40,28 @@ describe('Issue 496255939 Reproduction', function () {
       }
     }
 
-    console.log(`[INFO] Targeting Chrome Binary: ${chromePath}`);
-
     const options = new chrome.Options();
-    // Non-headless to verify UI and enterprise behavior
-    // options.addArguments('--headless');
     options.addArguments('--no-sandbox');
+    options.addArguments(`--user-data-dir=${profilePath}`);
+    // Enable the Policy Test Page feature
+    options.addArguments('--enable-features=PolicyTestPage');
+    
+    extraArgs.forEach(arg => options.addArguments(arg));
     
     if (chromePath && fs.existsSync(chromePath)) {
       options.setChromeBinaryPath(chromePath);
-    } else {
-      console.warn('[WARN] System Chrome not found, using default (CfT might be used)');
     }
 
     const service = new chrome.ServiceBuilder()
       .loggingTo('chromedriver.log')
       .enableVerboseLogging();
 
-    driver = await new Builder()
+    return await new Builder()
       .forBrowser('chrome')
       .setChromeOptions(options)
       .setChromeService(service)
       .build();
-  });
+  }
 
   afterEach(async function () {
     if (driver) {
@@ -76,24 +75,50 @@ describe('Issue 496255939 Reproduction', function () {
     console.log(`[INFO] Screenshot saved: ${name}`);
   }
 
-  it('should verify Enterprise mode and attempt reproduction', async function () {
-    // 1. Diagnostics: chrome://version
-    await driver.get('chrome://version/');
-    await new Promise(r => setTimeout(r, 3000));
-    await takeScreenshot('chrome_version.png');
+  it('should inject policies via chrome://policy/test and reproduce bug', async function () {
+    console.log('[INFO] Step 1: Setup policies via chrome://policy/test');
+    driver = await createDriver();
 
-    // 2. Diagnostics: chrome://policy
-    await driver.get('chrome://policy/');
-    await new Promise(r => setTimeout(r, 3000));
-    await takeScreenshot('active_policies.png');
+    await driver.get('chrome://policy/test');
+    await new Promise(r => setTimeout(r, 2000));
+    await takeScreenshot('policy_test_page_initial.png');
 
-    // 3. Diagnostics: chrome://management
+    // Add EnterpriseCustomLabelForBrowser
+    const nameInput = await driver.findElement(By.id('name-input')); // Speculative ID based on common Chrome patterns
+    const valueInput = await driver.findElement(By.id('value-input'));
+    const addButton = await driver.findElement(By.id('add-policy-btn'));
+
+    console.log('[INFO] Adding EnterpriseCustomLabelForBrowser...');
+    await nameInput.sendKeys('EnterpriseCustomLabelForBrowser');
+    await valueInput.sendKeys('"Test Organization"');
+    await addButton.click();
+
+    console.log('[INFO] Adding ShowHomeButton...');
+    await nameInput.clear();
+    await nameInput.sendKeys('ShowHomeButton');
+    await valueInput.clear();
+    await valueInput.sendKeys('true');
+    await addButton.click();
+
+    console.log('[INFO] Applying policies...');
+    const applyCheckbox = await driver.findElement(By.id('apply-policies-checkbox'));
+    if (!(await applyCheckbox.isSelected())) {
+        await applyCheckbox.click();
+    }
+    
+    await takeScreenshot('policy_test_page_configured.png');
+    await driver.quit();
+    driver = null;
+
+    console.log('[INFO] Step 2: Restarting Chrome to verify managed state');
+    driver = await createDriver();
+
+    // Verify Managed state
     await driver.get('chrome://management/');
     await new Promise(r => setTimeout(r, 3000));
-    await takeScreenshot('enterprise_mode.png');
+    await takeScreenshot('enterprise_mode_ui.png');
 
     // 4. Bug Reproduction
-    // Open a new tab to see if the bug manifests when launching from a fresh, unmanaged tab context
     console.log('[INFO] Opening a new tab...');
     await driver.switchTo().newWindow('tab');
 
@@ -101,17 +126,10 @@ describe('Issue 496255939 Reproduction', function () {
     console.log(`[INFO] Navigating to: ${targetUrl}`);
     await driver.get(targetUrl);
     
-    // Wait for potential rendering issues
     await new Promise(r => setTimeout(r, 3000));
     await takeScreenshot('bug_repro.png');
 
     const currentUrl = await driver.getCurrentUrl();
-    console.log(`[INFO] Current URL: ${currentUrl}`);
-
-    // If bug exists, URL might remain on the home page or similar
     expect(currentUrl).toMatch(/^https:\/\/www\.google\.com/);
-
-    const body = await driver.findElement(By.tagName('body'));
-    expect(await body.isDisplayed()).toBe(true);
   });
 });

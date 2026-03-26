@@ -66,26 +66,11 @@ jobs:
         Add-Content -Path $env:GITHUB_ENV -Value "SE_BROWSER_PATH=$chromePath"
         Add-Content -Path $env:GITHUB_ENV -Value "SE_OFFLINE_MODE=true"
 
-        # Apply policies using reg.exe for maximum compatibility with both hives and architectures
-        $keys = @(
-            "HKLM\SOFTWARE\Policies\Google\Chrome"
-        )
-        
-        foreach ($key in $keys) {
-            reg add "$key" /v ShowHomeButton /t REG_DWORD /d 1 /f /reg:64
-            # reg add "$key" /v ShowHomeButton /t REG_DWORD /d 1 /f /reg:32
-            reg add "$key" /v EnterpriseCustomLabelForBrowser /t REG_SZ /d "My Test Corp" /f /reg:64
-            # reg add "$key" /v EnterpriseCustomLabelForBrowser /t REG_SZ /d "My Test Corp" /f /reg:32
-        }
-
     - name: Verify Environment
       run: |
         Write-Host "CHROME_PATH: $env:CHROME_PATH"
         Write-Host "SE_BROWSER_PATH: $env:SE_BROWSER_PATH"
         Write-Host "SE_OFFLINE_MODE: $env:SE_OFFLINE_MODE"
-        Write-Host "Verifying Registry Policies..."
-        reg query "HKLM\SOFTWARE\Policies\Google\Chrome" /s /reg:64
-        # reg query "HKCU\SOFTWARE\Policies\Google\Chrome" /s /reg:64
 
     - name: Run tests
       run: npm test
