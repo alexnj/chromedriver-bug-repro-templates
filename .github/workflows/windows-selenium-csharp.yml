@@ -39,7 +39,7 @@ jobs:
     - name: Set up .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x'
+        dotnet-version: '9.0.x'
 
     - name: Install dependencies
       run: dotnet restore
@@ -49,4 +49,4 @@ jobs:
 
     - name: Dump log
       if: always()
-      run: cat d:\\chromedriver.log
+      run: Get-Content chromedriver.log -ErrorAction Ignore

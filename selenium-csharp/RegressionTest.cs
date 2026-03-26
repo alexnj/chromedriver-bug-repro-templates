@@ -23,26 +23,42 @@ namespace RegressionTest;
 public class Tests
 {
     [Test]
-    public void ShouldBeAbleToNavigateAfterDeletingNetworkConditions()
+    public void BugReproduction496255939()
     {
         var options = new ChromeOptions();
+        // The bug report notes the issue occurs on Windows, possibly in Enterprise environments.
+        // It's also reported for Chrome version 146.x.
+        // For reproduction, we use standard options but verify that navigation actually occurs.
         options.AddArgument("--headless");
         options.AddArgument("--no-sandbox");
-        // By default, the test uses the latest stable Chrome version.
-        // Replace the "stable" with the specific browser version if needed,
-        // e.g. 'canary', '115' or '144.0.7534.0' for example.
         options.BrowserVersion = "stable";
 
         var service = ChromeDriverService.CreateDefaultService();
-        service.LogPath = "d:\\chromedriver.log";
+        service.LogPath = "chromedriver.log";
         service.EnableVerboseLogging = true;
 
         IWebDriver driver = new ChromeDriver(service, options);
 
         try
         {
-            driver.Navigate().GoToUrl("https://www.google.com");
-            Assert.That(driver.Title, Is.EqualTo("Google"));
+            // Bug: Web pages incorrectly display in a small frame on the home page,
+            // and the URL in the address bar remains unchanged from the home page URL.
+            string targetUrl = "https://www.google.com/";
+            driver.Navigate().GoToUrl(targetUrl);
+
+            // Wait a moment for rendering (generic wait for simplicity in repro)
+            System.Threading.Thread.Sleep(2000);
+
+            string currentUrl = driver.Url;
+
+            // If the bug exists, currentUrl might still be "chrome://new-tab-page/" or similar.
+            // We assert that the URL has successfully changed to the target URL.
+            Assert.That(currentUrl, Does.StartWith("https://www.google.com"), 
+                "The URL should update to the target URL and not remain on the home page.");
+
+            // Additionally, check if we can interact with an element to ensure it's not just a frame.
+            var body = driver.FindElement(By.TagName("body"));
+            Assert.That(body.Displayed, Is.True, "The page body should be displayed properly.");
         }
         finally
         {
