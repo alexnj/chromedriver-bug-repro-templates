@@ -75,10 +75,6 @@ jobs:
         foreach ($key in $keys) {
             reg add "$key" /v ShowHomeButton /t REG_DWORD /d 1 /f /reg:64
             reg add "$key" /v ShowHomeButton /t REG_DWORD /d 1 /f /reg:32
-            reg add "$key" /v PasswordManagerEnabled /t REG_DWORD /d 0 /f /reg:64
-            reg add "$key" /v PasswordManagerEnabled /t REG_DWORD /d 0 /f /reg:32
-            reg add "$key" /v CloudManagementEnrollmentToken /t REG_SZ /d "repro-dummy-token" /f /reg:64
-            reg add "$key" /v CloudManagementEnrollmentToken /t REG_SZ /d "repro-dummy-token" /f /reg:32
             reg add "$key" /v EnterpriseCustomLabelForBrowser /t REG_SZ /d "My Test Corp" /f /reg:64
             reg add "$key" /v EnterpriseCustomLabelForBrowser /t REG_SZ /d "My Test Corp" /f /reg:32
         }
@@ -94,10 +90,6 @@ jobs:
 
     - name: Run tests
       run: npm test
-
-    - name: List files for debugging
-      if: always()
-      run: Get-ChildItem -Recurse
 
     - name: Upload Screenshots
       uses: actions/upload-artifact@v4
