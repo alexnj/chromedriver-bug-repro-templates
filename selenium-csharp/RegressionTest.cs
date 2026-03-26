@@ -29,7 +29,7 @@ public class Tests
         // The bug report notes the issue occurs on Windows, possibly in Enterprise environments.
         // It's also reported for Chrome version 146.x.
         // For reproduction, we use standard options but verify that navigation actually occurs.
-        options.AddArgument("--headless");
+        // options.AddArgument("--headless");
         options.AddArgument("--no-sandbox");
         options.BrowserVersion = "stable";
 
