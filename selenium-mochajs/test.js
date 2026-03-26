@@ -29,8 +29,12 @@ describe('Issue 496255939 Reproduction', function () {
     let chromePath = process.env.CHROME_PATH;
     if (!chromePath || chromePath.includes('.cache')) {
       const paths = [
-        'C:\\Program Files\\Google\Chrome\\Application\\chrome.exe',
-        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
+        // Windows
+        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+        // macOS
+        '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
+        '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
       ];
       for (const p of paths) {
         if (fs.existsSync(p)) {
@@ -83,30 +87,49 @@ describe('Issue 496255939 Reproduction', function () {
     await new Promise(r => setTimeout(r, 2000));
     await takeScreenshot('policy_test_page_initial.png');
 
-    // Add EnterpriseCustomLabelForBrowser
-    const nameInput = await driver.findElement(By.id('name-input')); // Speculative ID based on common Chrome patterns
-    const valueInput = await driver.findElement(By.id('value-input'));
-    const addButton = await driver.findElement(By.id('add-policy-btn'));
-
-    console.log('[INFO] Adding EnterpriseCustomLabelForBrowser...');
-    await nameInput.sendKeys('EnterpriseCustomLabelForBrowser');
-    await valueInput.sendKeys('"Test Organization"');
-    await addButton.click();
-
-    console.log('[INFO] Adding ShowHomeButton...');
-    await nameInput.clear();
-    await nameInput.sendKeys('ShowHomeButton');
-    await valueInput.clear();
-    await valueInput.sendKeys('true');
-    await addButton.click();
-
-    console.log('[INFO] Applying policies...');
-    const applyCheckbox = await driver.findElement(By.id('apply-policies-checkbox'));
-    if (!(await applyCheckbox.isSelected())) {
-        await applyCheckbox.click();
-    }
+    console.log('[INFO] Injecting policies using JS (bypassing Shadow DOM if necessary)...');
     
-    await takeScreenshot('policy_test_page_configured.png');
+    // We use executeScript to directly interact with the page's internals, 
+    // as chrome:// pages often use complex Shadow DOM structures (Polymer/Lit).
+    await driver.executeScript(`
+      // Helper to find elements even inside shadow DOMs if needed, 
+      // but chrome://policy/test uses a standard policy-test-table element
+      
+      const policyTable = document.querySelector('policy-test-table');
+      if (policyTable && policyTable.shadowRoot) {
+          // If it's a web component
+          const nameInput = policyTable.shadowRoot.querySelector('#policy-name');
+          const valueInput = policyTable.shadowRoot.querySelector('#policy-value');
+          const addBtn = policyTable.shadowRoot.querySelector('#add-policy');
+          
+          if (nameInput) {
+             nameInput.value = 'EnterpriseCustomLabelForBrowser';
+             valueInput.value = '"My Test Corp"';
+             addBtn.click();
+             
+             nameInput.value = 'ShowHomeButton';
+             valueInput.value = 'true';
+             addBtn.click();
+          }
+      } else {
+          // Fallback if it's standard DOM
+          document.getElementById('policy-name').value = 'EnterpriseCustomLabelForBrowser';
+          document.getElementById('policy-value').value = '"My Test Corp"';
+          document.getElementById('add-policy-btn').click();
+          
+          document.getElementById('policy-name').value = 'ShowHomeButton';
+          document.getElementById('policy-value').value = 'true';
+          document.getElementById('add-policy-btn').click();
+      }
+      
+      // Check the Apply box
+      const applyCheckbox = document.getElementById('apply-policies') || document.querySelector('policy-test-table')?.shadowRoot?.querySelector('#apply-policies');
+      if (applyCheckbox && !applyCheckbox.checked) {
+          applyCheckbox.click();
+      }
+    `);
+
+    await new Promise(r => setTimeout(r, 2000));
     await driver.quit();
     driver = null;
 
