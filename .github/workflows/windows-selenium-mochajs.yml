@@ -79,6 +79,8 @@ jobs:
             reg add "$key" /v PasswordManagerEnabled /t REG_DWORD /d 0 /f /reg:32
             reg add "$key" /v CloudManagementEnrollmentToken /t REG_SZ /d "repro-dummy-token" /f /reg:64
             reg add "$key" /v CloudManagementEnrollmentToken /t REG_SZ /d "repro-dummy-token" /f /reg:32
+            reg add "$key" /v EnterpriseCustomLabelForBrowser /t REG_SZ /d "My Test Corp" /f /reg:64
+            reg add "$key" /v EnterpriseCustomLabelForBrowser /t REG_SZ /d "My Test Corp" /f /reg:32
         }
 
     - name: Verify Environment
