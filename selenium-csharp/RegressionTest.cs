@@ -34,7 +34,7 @@ public class Tests
         options.BrowserVersion = "stable";
 
         var service = ChromeDriverService.CreateDefaultService();
-        service.LogPath = "chromedriver.log";
+        service.LogPath = "d:\\chromedriver.log";
         service.EnableVerboseLogging = true;
 
         IWebDriver driver = new ChromeDriver(service, options);

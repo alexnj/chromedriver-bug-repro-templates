@@ -44,9 +44,14 @@ jobs:
     - name: Install dependencies
       run: dotnet restore
 
+    - name: Configure Chrome Enterprise Policy (Registry)
+      run: |
+        # Setting a policy in this registry key forces Chrome into "Managed by your organization" mode
+        reg add HKLM\SOFTWARE\Policies\Google\Chrome /v ShowHomeButton /t REG_DWORD /d 1 /f
+
     - name: Run tests
       run: dotnet test --no-restore --logger:"console;verbosity=detailed"
 
     - name: Dump log
       if: always()
-      run: Get-Content chromedriver.log -ErrorAction Ignore
+      run: cat d:\\chromedriver.log
