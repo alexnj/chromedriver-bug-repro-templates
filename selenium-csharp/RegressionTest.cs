@@ -48,9 +48,10 @@ public class Tests
             Assert.Fail($"CRITICAL: System Google Chrome binary not found at: {chromePath}. Rejecting .cache fallback.");
         }
 
+        // Set the binary explicitly
         options.BinaryLocation = chromePath;
-        // Also set it in AdditionalOptions to be absolutely sure it's serialized into goog:chromeOptions
-        // options.AddAdditionalOption("binary", chromePath); // This usually works if BinaryLocation fails
+        // Setting BrowserVersion to null should stop Selenium Manager from managing the browser
+        options.BrowserVersion = null;
 
         Console.WriteLine($"[INFO] BinaryLocation set to: {options.BinaryLocation}");
 
