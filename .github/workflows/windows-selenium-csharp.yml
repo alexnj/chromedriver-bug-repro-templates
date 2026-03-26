@@ -65,6 +65,8 @@ jobs:
         Write-Host "Forcing System Chrome at: $chromePath"
         echo "CHROME_PATH=$chromePath" >> $env:GITHUB_ENV
         echo "SE_BROWSER_PATH=$chromePath" >> $env:GITHUB_ENV
+        # Force Selenium Manager to NOT download anything
+        echo "SE_OFFLINE_MODE=true" >> $env:GITHUB_ENV
 
         # Apply policies using reg.exe for maximum compatibility with both hives and architectures
         # 0x1 = Enabled, 0x0 = Disabled

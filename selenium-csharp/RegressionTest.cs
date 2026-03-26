@@ -25,35 +25,24 @@ public class Tests
     [Test]
     public void BugReproduction496255939()
     {
-        var options = new ChromeOptions();
-        // The bug report notes the issue occurs on Windows, possibly in Enterprise environments.
-        // It's also reported for Chrome version 146.x.
-        // Running in non-headless mode to verify enterprise UI and bug manifestation.
-        // options.AddArgument("--headless"); 
-        options.AddArgument("--no-sandbox");
-        
         // Use the system-installed Google Chrome found by CI
-        var chromePath = Environment.GetEnvironmentVariable("CHROME_PATH");
-        if (string.IsNullOrWhiteSpace(chromePath) || chromePath.Contains(".cache"))
+        var chromePath = Environment.GetEnvironmentVariable("CHROME_PATH") ?? @"C:\Program Files\Google\Chrome\Application\chrome.exe";
+        if (!File.Exists(chromePath))
         {
-            chromePath = @"C:\Program Files\Google\Chrome\Application\chrome.exe";
-            if (!File.Exists(chromePath))
-            {
-                chromePath = @"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe";
-            }
+            chromePath = @"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe";
         }
         
         if (!File.Exists(chromePath))
         {
-            Assert.Fail($"CRITICAL: System Google Chrome binary not found at: {chromePath}. Rejecting .cache fallback.");
+            Assert.Fail($"CRITICAL: System Google Chrome binary not found at: {chromePath}. Current environment variables: CHROME_PATH='{Environment.GetEnvironmentVariable("CHROME_PATH")}', SE_BROWSER_PATH='{Environment.GetEnvironmentVariable("SE_BROWSER_PATH")}'");
         }
 
-        // Set the binary explicitly
+        var options = new ChromeOptions();
         options.BinaryLocation = chromePath;
-        // Setting BrowserVersion to null should stop Selenium Manager from managing the browser
-        options.BrowserVersion = null;
+        options.AddArgument("--no-sandbox");
+        // Do NOT set BrowserVersion as it triggers Selenium Manager management
 
-        Console.WriteLine($"[INFO] BinaryLocation set to: {options.BinaryLocation}");
+        Console.WriteLine($"[INFO] BinaryLocation explicitly set to: {options.BinaryLocation}");
 
         var service = ChromeDriverService.CreateDefaultService();
         service.LogPath = "d:\\chromedriver.log";
