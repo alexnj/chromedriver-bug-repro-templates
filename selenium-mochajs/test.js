@@ -143,11 +143,9 @@ describe('Issue 496255939 Reproduction', function () {
     `);
 
     await new Promise(r => setTimeout(r, 2000));
-    await driver.quit();
-    driver = null;
 
-    console.log('[INFO] Step 2: Restarting Chrome to verify managed state');
-    driver = await createDriver();
+    console.log('[INFO] Step 2: Opening a new tab to verify managed state without restarting');
+    await driver.switchTo().newWindow('tab');
 
     // Verify Managed state
     await driver.get('chrome://management/');
@@ -155,8 +153,35 @@ describe('Issue 496255939 Reproduction', function () {
     await takeScreenshot('enterprise_mode_ui.png');
 
     // 4. Bug Reproduction
-    console.log('[INFO] Opening a new tab...');
+    console.log('[INFO] Opening another new tab for bug reproduction...');
     await driver.switchTo().newWindow('tab');
+
+    // Check for WebUI targets via CDP
+    console.log('[INFO] Fetching active targets via CDP and window handles...');
+    
+    try {
+        await driver.sendDevToolsCommand('Target.setDiscoverTargets', { discover: true });
+        const targets = await driver.sendDevToolsCommand('Target.getTargets', {});
+        console.log('[INFO] CDP Response:', JSON.stringify(targets));
+        
+        if (targets && targets.targetInfos) {
+            console.log('[INFO] Active CDP Targets:');
+            targets.targetInfos.forEach(t => {
+                console.log(` - [${t.type}] ${t.title} (${t.url})`);
+            });
+        }
+        
+        const handles = await driver.getAllWindowHandles();
+        console.log('[INFO] Window Handles:');
+        const currentHandle = await driver.getWindowHandle();
+        for (const handle of handles) {
+            await driver.switchTo().window(handle);
+            console.log(` - Handle: ${handle} URL: ${await driver.getCurrentUrl()} Title: ${await driver.getTitle()}`);
+        }
+        await driver.switchTo().window(currentHandle);
+    } catch (e) {
+        console.log('[WARN] Failed to fetch targets:', e.message);
+    }
 
     const targetUrl = 'https://www.google.com/';
     console.log(`[INFO] Navigating to: ${targetUrl}`);
@@ -166,6 +191,24 @@ describe('Issue 496255939 Reproduction', function () {
     await takeScreenshot('bug_repro.png');
 
     const currentUrl = await driver.getCurrentUrl();
+    console.log(`[INFO] Final URL: ${currentUrl}`);
+    
+    // Check if any handle is an unexpected WebUI target
+    const handlesAfter = await driver.getAllWindowHandles();
+    for (const handle of handlesAfter) {
+        await driver.switchTo().window(handle);
+        const url = await driver.getCurrentUrl();
+        if (url.includes('chrome://')) {
+            console.log(` - Target still open: [${handle}] ${url}`);
+        }
+    }
+    
+    // Back to target handle
+    const targetHandle = handlesAfter[handlesAfter.length - 1];
+    await driver.switchTo().window(targetHandle);
+    
     expect(currentUrl).toMatch(/^https:\/\/www\.google\.com/);
+    const body = await driver.findElement(By.tagName('body'));
+    expect(await body.isDisplayed()).toBe(true);
   });
 });
