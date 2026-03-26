@@ -75,12 +75,14 @@ jobs:
     - name: Run tests
       run: npm test
 
-    - name: Upload Screenshots
+    - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: screenshots
-        path: selenium-mochajs/*.png
+        name: screenshots_and_logs
+        path: |
+          selenium-mochajs/*.png
+          selenium-mochajs/*.txt
 
     - name: Dump log
       if: always()

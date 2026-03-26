@@ -92,7 +92,7 @@ describe('Issue 496255939 Reproduction', function () {
     
     console.log('[INFO] Injecting policies using JS (bypassing Shadow DOM if necessary)...');
     
-    await driver.executeScript(`
+    const result = await driver.executeScript(`
       function getActiveRow() {
           const table = document.querySelector('policy-test-table');
           if (!table || !table.shadowRoot) return null;
@@ -153,8 +153,7 @@ describe('Issue 496255939 Reproduction', function () {
             }
             return tree;
           }
-          const dom = getDomTree(document.body);
-          throw new Error("Failed to find policy input elements in the DOM.\\nDOM Dump:\\n" + dom);
+          return { error: true, domDump: getDomTree(document.body) };
       }
 
       // Check the Apply box, which is in the main document
@@ -162,7 +161,14 @@ describe('Issue 496255939 Reproduction', function () {
       if (applyCheckbox && !applyCheckbox.checked) {
           applyCheckbox.click();
       }
+      return { error: false };
     `);
+
+    if (result && result.error) {
+       fs.writeFileSync('dom_dump.txt', result.domDump, 'utf8');
+       console.log('[INFO] Saved DOM structure to dom_dump.txt');
+       throw new Error("Failed to find policy input elements in the DOM. Check dom_dump.txt artifact.");
+    }
 
     await new Promise(r => setTimeout(r, 2000));
 
