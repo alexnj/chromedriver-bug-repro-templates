@@ -85,7 +85,7 @@ jobs:
         Write-Host "SE_OFFLINE_MODE: $env:SE_OFFLINE_MODE"
         Write-Host "Verifying Registry Policies..."
         reg query "HKLM\SOFTWARE\Policies\Google\Chrome" /s /reg:64
-        reg query "HKCU\SOFTWARE\Policies\Google\Chrome" /s /reg:64
+        # reg query "HKCU\SOFTWARE\Policies\Google\Chrome" /s /reg:64
 
     - name: Run tests
       run: npm test
