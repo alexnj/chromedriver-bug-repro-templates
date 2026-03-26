@@ -93,6 +93,10 @@ describe('Issue 496255939 Reproduction', function () {
     await takeScreenshot('enterprise_mode.png');
 
     // 4. Bug Reproduction
+    // Open a new tab to see if the bug manifests when launching from a fresh, unmanaged tab context
+    console.log('[INFO] Opening a new tab...');
+    await driver.switchTo().newWindow('tab');
+
     const targetUrl = 'https://www.google.com/';
     console.log(`[INFO] Navigating to: ${targetUrl}`);
     await driver.get(targetUrl);
