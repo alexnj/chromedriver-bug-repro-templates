@@ -46,30 +46,40 @@ jobs:
 
     - name: Locate Chrome and Configure Enterprise Policy
       run: |
-        # Locate chrome.exe
-        $chromePath = (Get-ChildItem -Path "C:\Program Files\Google\Chrome\Application\chrome.exe", "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" -ErrorAction SilentlyContinue).FullName
-        Write-Host "Found Chrome at: $chromePath"
+        # Locate chrome.exe explicitly
+        if (Test-Path "C:\Program Files\Google\Chrome\Application\chrome.exe") {
+            $chromePath = "C:\Program Files\Google\Chrome\Application\chrome.exe"
+        } elseif (Test-Path "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe") {
+            $chromePath = "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+        }
+        Write-Host "Targeting Chrome Binary: $chromePath"
         echo "CHROME_PATH=$chromePath" >> $env:GITHUB_ENV
 
-        # Apply policy to HKLM, HKCU, and WOW6432Node (for 32-bit Chrome on 64-bit OS)
-        $registryPaths = @(
-            "HKLM:\SOFTWARE\Policies\Google\Chrome",
-            "HKCU:\SOFTWARE\Policies\Google\Chrome",
-            "HKLM:\SOFTWARE\WOW6432Node\Policies\Google\Chrome",
-            "HKCU:\SOFTWARE\WOW6432Node\Policies\Google\Chrome"
+        # Apply policies using reg.exe for maximum compatibility with both hives and architectures
+        # 0x1 = Enabled, 0x0 = Disabled
+        $keys = @(
+            "HKLM\SOFTWARE\Policies\Google\Chrome",
+            "HKCU\SOFTWARE\Policies\Google\Chrome"
         )
-        foreach ($path in $registryPaths) {
-            if (!(Test-Path $path)) { New-Item -Path $path -Force }
-            Set-ItemProperty -Path $path -Name "ShowHomeButton" -Value 1 -Type DWord
-            Set-ItemProperty -Path $path -Name "CloudManagementEnrollmentToken" -Value "repro-dummy-token" -Type String
+        
+        foreach ($key in $keys) {
+            # Show Home Button
+            reg add "$key" /v ShowHomeButton /t REG_DWORD /d 1 /f /reg:64
+            reg add "$key" /v ShowHomeButton /t REG_DWORD /d 1 /f /reg:32
+            # Disable Password Manager (obvious policy)
+            reg add "$key" /v PasswordManagerEnabled /t REG_DWORD /d 0 /f /reg:64
+            reg add "$key" /v PasswordManagerEnabled /t REG_DWORD /d 0 /f /reg:32
+            # Add Dummy Enrollment Token
+            reg add "$key" /v CloudManagementEnrollmentToken /t REG_SZ /d "repro-dummy-token" /f /reg:64
+            reg add "$key" /v CloudManagementEnrollmentToken /t REG_SZ /d "repro-dummy-token" /f /reg:32
         }
 
-        # Verify registry
-        reg query "HKLM\SOFTWARE\Policies\Google\Chrome"
-        reg query "HKLM\SOFTWARE\WOW6432Node\Policies\Google\Chrome"
-
     - name: Run tests
-      run: dotnet test --no-restore --logger:"console;verbosity=detailed"
+      run: |
+        Write-Host "Verifying Registry Policies..."
+        reg query "HKLM\SOFTWARE\Policies\Google\Chrome" /s /reg:64
+        reg query "HKCU\SOFTWARE\Policies\Google\Chrome" /s /reg:64
+        dotnet test --no-restore --logger:"console;verbosity=detailed"
 
     - name: Upload Screenshots
       uses: actions/upload-artifact@v4

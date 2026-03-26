@@ -54,14 +54,19 @@ public class Tests
 
         try
         {
+            // Diagnostics: Full environment state
+            driver.Navigate().GoToUrl("chrome://version/");
+            System.Threading.Thread.Sleep(3000);
+            ((ITakesScreenshot)driver).GetScreenshot().SaveAsFile("chrome_version.png");
+
             // Diagnostics: Capture exactly which policies are active
             driver.Navigate().GoToUrl("chrome://policy/");
-            System.Threading.Thread.Sleep(2000);
+            System.Threading.Thread.Sleep(3000);
             ((ITakesScreenshot)driver).GetScreenshot().SaveAsFile("active_policies.png");
 
             // Capture proof of Enterprise mode
             driver.Navigate().GoToUrl("chrome://management/");
-            System.Threading.Thread.Sleep(2000);
+            System.Threading.Thread.Sleep(3000);
             ((ITakesScreenshot)driver).GetScreenshot().SaveAsFile("enterprise_mode.png");
 
             // Bug: Web pages incorrectly display in a small frame on the home page,
