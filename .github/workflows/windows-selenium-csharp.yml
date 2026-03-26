@@ -46,13 +46,23 @@ jobs:
 
     - name: Locate Chrome and Configure Enterprise Policy
       run: |
-        # Locate chrome.exe explicitly
-        if (Test-Path "C:\Program Files\Google\Chrome\Application\chrome.exe") {
-            $chromePath = "C:\Program Files\Google\Chrome\Application\chrome.exe"
-        } elseif (Test-Path "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe") {
-            $chromePath = "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+        # Use where.exe to find system chrome
+        $chromePath = (where.exe chrome | Select-Object -First 1)
+        if (!$chromePath) {
+            Write-Host "chrome.exe not in PATH, searching standard locations..."
+            if (Test-Path "C:\Program Files\Google\Chrome\Application\chrome.exe") {
+                $chromePath = "C:\Program Files\Google\Chrome\Application\chrome.exe"
+            } elseif (Test-Path "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe") {
+                $chromePath = "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+            }
         }
-        Write-Host "Targeting Chrome Binary: $chromePath"
+        
+        if (!$chromePath) {
+            Write-Error "CRITICAL: Google Chrome (System) not found on this runner!"
+            exit 1
+        }
+
+        Write-Host "Found System Chrome at: $chromePath"
         echo "CHROME_PATH=$chromePath" >> $env:GITHUB_ENV
 
         # Apply policies using reg.exe for maximum compatibility with both hives and architectures

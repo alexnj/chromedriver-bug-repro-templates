@@ -43,6 +43,11 @@ public class Tests
             }
         }
         
+        if (!File.Exists(chromePath))
+        {
+            Assert.Fail($"CRITICAL: Google Chrome binary not found at: {chromePath}. Fallback to Chrome for Testing is disabled.");
+        }
+
         options.BinaryLocation = chromePath;
         Console.WriteLine($"[INFO] Launching Chrome from: {options.BinaryLocation}");
 
