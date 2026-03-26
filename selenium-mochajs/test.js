@@ -87,43 +87,56 @@ describe('Issue 496255939 Reproduction', function () {
     await new Promise(r => setTimeout(r, 2000));
     await takeScreenshot('policy_test_page_initial.png');
 
+    console.log('[INFO] Waiting for policy table to render...');
+    await new Promise(r => setTimeout(r, 2000));
+    
     console.log('[INFO] Injecting policies using JS (bypassing Shadow DOM if necessary)...');
     
-    // We use executeScript to directly interact with the page's internals, 
-    // as chrome:// pages often use complex Shadow DOM structures (Polymer/Lit).
     await driver.executeScript(`
-      // Helper to find elements even inside shadow DOMs if needed, 
-      // but chrome://policy/test uses a standard policy-test-table element
-      
-      const policyTable = document.querySelector('policy-test-table');
-      if (policyTable && policyTable.shadowRoot) {
-          // If it's a web component
-          const nameInput = policyTable.shadowRoot.querySelector('#policy-name');
-          const valueInput = policyTable.shadowRoot.querySelector('#policy-value');
-          const addBtn = policyTable.shadowRoot.querySelector('#add-policy');
+      function getActiveRow() {
+          const table = document.querySelector('policy-test-table');
+          if (!table || !table.shadowRoot) return null;
           
-          if (nameInput) {
-             nameInput.value = 'EnterpriseCustomLabelForBrowser';
-             valueInput.value = '"My Test Corp"';
-             addBtn.click();
-             
-             nameInput.value = 'ShowHomeButton';
-             valueInput.value = 'true';
-             addBtn.click();
-          }
-      } else {
-          // Fallback if it's standard DOM
-          document.getElementById('policy-name').value = 'EnterpriseCustomLabelForBrowser';
-          document.getElementById('policy-value').value = '"My Test Corp"';
-          document.getElementById('add-policy-btn').click();
+          const rows = table.shadowRoot.querySelectorAll('policy-test-row');
+          if (rows.length === 0) return null;
           
-          document.getElementById('policy-name').value = 'ShowHomeButton';
-          document.getElementById('policy-value').value = 'true';
-          document.getElementById('add-policy-btn').click();
+          // Use the last row as it's the newest empty one
+          return rows[rows.length - 1];
       }
+
+      function injectPolicy(name, value) {
+          const row = getActiveRow();
+          if (!row || !row.shadowRoot) return false;
+          
+          const nameInput = row.shadowRoot.querySelector('input.name');
+          const valueInput = row.shadowRoot.querySelector('input.value');
+          
+          if (nameInput && valueInput) {
+              nameInput.value = name;
+              nameInput.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+              
+              valueInput.value = value;
+              valueInput.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+              
+              // The add button is outside the shadow root of the row, but inside the table
+              const addBtn = document.querySelector('policy-test-table').shadowRoot.querySelector('#add-policy-btn');
+              if (addBtn) {
+                  addBtn.click();
+                  return true;
+              }
+          }
+          return false;
+      }
+
+      const success1 = injectPolicy('EnterpriseCustomLabelForBrowser', '"My Test Corp"');
+      const success2 = injectPolicy('ShowHomeButton', 'true');
       
-      // Check the Apply box
-      const applyCheckbox = document.getElementById('apply-policies') || document.querySelector('policy-test-table')?.shadowRoot?.querySelector('#apply-policies');
+      if (!success1 || !success2) {
+          throw new Error("Failed to find policy input elements in the DOM.");
+      }
+
+      // Check the Apply box, which is in the main document
+      const applyCheckbox = document.getElementById('apply-policies');
       if (applyCheckbox && !applyCheckbox.checked) {
           applyCheckbox.click();
       }
