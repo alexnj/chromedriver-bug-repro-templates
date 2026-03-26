@@ -68,7 +68,7 @@ jobs:
 
         # Apply policies using reg.exe for maximum compatibility with both hives and architectures
         $keys = @(
-            "HKLM\SOFTWARE\Policies\Google\Chrome",
+            "HKLM\SOFTWARE\Policies\Google\Chrome"
         )
         
         foreach ($key in $keys) {
