@@ -47,7 +47,7 @@ jobs:
     - name: Locate Chrome and Configure Enterprise Policy
       run: |
         # Locate chrome.exe
-        $chromePath = (Get-ChildItem -Path "C:\Program Files\Google\Chrome\Application\chrome.exe", "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" -ErrorAction SilentlyContinue).FullName[0]
+        $chromePath = (Get-ChildItem -Path "C:\Program Files\Google\Chrome\Application\chrome.exe", "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" -ErrorAction SilentlyContinue).FullName
         Write-Host "Found Chrome at: $chromePath"
         echo "CHROME_PATH=$chromePath" >> $env:GITHUB_ENV
 
