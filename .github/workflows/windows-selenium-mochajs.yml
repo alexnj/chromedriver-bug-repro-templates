@@ -1,0 +1,109 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Windows Selenium Mocha.js
+
+on:
+  push:
+    paths:
+      - 'selenium-mochajs/**'
+      - '.github/workflows/windows-selenium-mochajs.yml'
+  pull_request:
+    paths:
+      - 'selenium-mochajs/**'
+      - '.github/workflows/windows-selenium-mochajs.yml'
+
+defaults:
+  run:
+    working-directory: selenium-mochajs
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 'latest'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Install Google Chrome (System)
+      run: |
+        if (!(Test-Path "C:\Program Files\Google\Chrome\Application\chrome.exe") -and !(Test-Path "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe")) {
+          choco install googlechrome --no-progress -y
+        }
+
+    - name: Locate Chrome and Configure Enterprise Policy
+      run: |
+        $chromePath = "C:\Program Files\Google\Chrome\Application\chrome.exe"
+        if (!(Test-Path $chromePath)) {
+            $chromePath = "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+        }
+        
+        if (!(Test-Path $chromePath)) {
+            Write-Error "CRITICAL: Google Chrome (System) not found!"
+            exit 1
+        }
+
+        Write-Host "Forcing System Chrome at: $chromePath"
+        Add-Content -Path $env:GITHUB_ENV -Value "CHROME_PATH=$chromePath"
+        Add-Content -Path $env:GITHUB_ENV -Value "SE_BROWSER_PATH=$chromePath"
+        Add-Content -Path $env:GITHUB_ENV -Value "SE_OFFLINE_MODE=true"
+
+        # Apply policies using reg.exe for maximum compatibility with both hives and architectures
+        $keys = @(
+            "HKLM\SOFTWARE\Policies\Google\Chrome",
+            "HKCU\SOFTWARE\Policies\Google\Chrome"
+        )
+        
+        foreach ($key in $keys) {
+            reg add "$key" /v ShowHomeButton /t REG_DWORD /d 1 /f /reg:64
+            reg add "$key" /v ShowHomeButton /t REG_DWORD /d 1 /f /reg:32
+            reg add "$key" /v PasswordManagerEnabled /t REG_DWORD /d 0 /f /reg:64
+            reg add "$key" /v PasswordManagerEnabled /t REG_DWORD /d 0 /f /reg:32
+            reg add "$key" /v CloudManagementEnrollmentToken /t REG_SZ /d "repro-dummy-token" /f /reg:64
+            reg add "$key" /v CloudManagementEnrollmentToken /t REG_SZ /d "repro-dummy-token" /f /reg:32
+        }
+
+    - name: Verify Environment
+      run: |
+        Write-Host "CHROME_PATH: $env:CHROME_PATH"
+        Write-Host "SE_BROWSER_PATH: $env:SE_BROWSER_PATH"
+        Write-Host "SE_OFFLINE_MODE: $env:SE_OFFLINE_MODE"
+        Write-Host "Verifying Registry Policies..."
+        reg query "HKLM\SOFTWARE\Policies\Google\Chrome" /s /reg:64
+        reg query "HKCU\SOFTWARE\Policies\Google\Chrome" /s /reg:64
+
+    - name: Run tests
+      run: npm test
+
+    - name: List files for debugging
+      if: always()
+      run: Get-ChildItem -Recurse
+
+    - name: Upload Screenshots
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: screenshots
+        path: selenium-mochajs/*.png
+
+    - name: Dump log
+      if: always()
+      run: Get-Content chromedriver.log -ErrorAction Ignore

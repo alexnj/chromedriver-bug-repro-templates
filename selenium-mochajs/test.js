@@ -14,25 +14,44 @@
  * limitations under the License.
  */
 
-const { Builder } = require('selenium-webdriver');
+const { Builder, By } = require('selenium-webdriver');
 const { expect } = require('expect');
 const chrome = require('selenium-webdriver/chrome');
+const fs = require('fs');
+const path = require('path');
 
-describe('Selenium ChromeDriver', function () {
+describe('Issue 496255939 Reproduction', function () {
   let driver;
-  // The chrome and chromedriver installation can take some time. 
-  // Give 5 minutes to install everything.
   this.timeout(5 * 60 * 1000);
 
   beforeEach(async function () {
-    const options = new chrome.Options();
-    options.addArguments('--headless');
-    options.addArguments('--no-sandbox');
+    let chromePath = process.env.CHROME_PATH;
+    if (!chromePath || chromePath.includes('.cache')) {
+      // Fallback/Local dev logic
+      const paths = [
+        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
+      ];
+      for (const p of paths) {
+        if (fs.existsSync(p)) {
+          chromePath = p;
+          break;
+        }
+      }
+    }
 
-    // By default, the test uses the latest stable Chrome version.
-    // Replace the "stable" with the specific browser version if needed,
-    // e.g. 'canary', '115' or '144.0.7534.0' for example.
-    options.setBrowserVersion('stable');
+    console.log(`[INFO] Targeting Chrome Binary: ${chromePath}`);
+
+    const options = new chrome.Options();
+    // Non-headless to verify UI and enterprise behavior
+    // options.addArguments('--headless');
+    options.addArguments('--no-sandbox');
+    
+    if (chromePath && fs.existsSync(chromePath)) {
+      options.setChromeBinaryPath(chromePath);
+    } else {
+      console.warn('[WARN] System Chrome not found, using default (CfT might be used)');
+    }
 
     const service = new chrome.ServiceBuilder()
       .loggingTo('chromedriver.log')
@@ -46,19 +65,49 @@ describe('Selenium ChromeDriver', function () {
   });
 
   afterEach(async function () {
-    await driver.quit();
+    if (driver) {
+      await driver.quit();
+    }
   });
 
-  /**
-   * This test is intended to verify the setup is correct.
-   */
-  it('should be able to navigate to google.com', async function () {
-    await driver.get('https://www.google.com');
-    const title = await driver.getTitle();
-    expect(title).toBe('Google');
-  });
+  async function takeScreenshot(name) {
+    const data = await driver.takeScreenshot();
+    fs.writeFileSync(name, data, 'base64');
+    console.log(`[INFO] Screenshot saved: ${name}`);
+  }
 
-  it('ISSUE REPRODUCTION', async function () {
-    // Add test reproducing the issue here.
+  it('should verify Enterprise mode and attempt reproduction', async function () {
+    // 1. Diagnostics: chrome://version
+    await driver.get('chrome://version/');
+    await new Promise(r => setTimeout(r, 3000));
+    await takeScreenshot('chrome_version.png');
+
+    // 2. Diagnostics: chrome://policy
+    await driver.get('chrome://policy/');
+    await new Promise(r => setTimeout(r, 3000));
+    await takeScreenshot('active_policies.png');
+
+    // 3. Diagnostics: chrome://management
+    await driver.get('chrome://management/');
+    await new Promise(r => setTimeout(r, 3000));
+    await takeScreenshot('enterprise_mode.png');
+
+    // 4. Bug Reproduction
+    const targetUrl = 'https://www.google.com/';
+    console.log(`[INFO] Navigating to: ${targetUrl}`);
+    await driver.get(targetUrl);
+    
+    // Wait for potential rendering issues
+    await new Promise(r => setTimeout(r, 3000));
+    await takeScreenshot('bug_repro.png');
+
+    const currentUrl = await driver.getCurrentUrl();
+    console.log(`[INFO] Current URL: ${currentUrl}`);
+
+    // If bug exists, URL might remain on the home page or similar
+    expect(currentUrl).toMatch(/^https:\/\/www\.google\.com/);
+
+    const body = await driver.findElement(By.tagName('body'));
+    expect(await body.isDisplayed()).toBe(true);
   });
 });
