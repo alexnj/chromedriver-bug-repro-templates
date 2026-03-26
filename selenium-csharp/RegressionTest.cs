@@ -34,7 +34,7 @@ public class Tests
         
         // Use the system-installed Google Chrome found by CI
         var chromePath = Environment.GetEnvironmentVariable("CHROME_PATH");
-        if (string.IsNullOrWhiteSpace(chromePath))
+        if (string.IsNullOrWhiteSpace(chromePath) || chromePath.Contains(".cache"))
         {
             chromePath = @"C:\Program Files\Google\Chrome\Application\chrome.exe";
             if (!File.Exists(chromePath))
@@ -45,16 +45,20 @@ public class Tests
         
         if (!File.Exists(chromePath))
         {
-            Assert.Fail($"CRITICAL: Google Chrome binary not found at: {chromePath}. Fallback to Chrome for Testing is disabled.");
+            Assert.Fail($"CRITICAL: System Google Chrome binary not found at: {chromePath}. Rejecting .cache fallback.");
         }
 
         options.BinaryLocation = chromePath;
-        Console.WriteLine($"[INFO] Launching Chrome from: {options.BinaryLocation}");
+        // Also set it in AdditionalOptions to be absolutely sure it's serialized into goog:chromeOptions
+        // options.AddAdditionalOption("binary", chromePath); // This usually works if BinaryLocation fails
+
+        Console.WriteLine($"[INFO] BinaryLocation set to: {options.BinaryLocation}");
 
         var service = ChromeDriverService.CreateDefaultService();
         service.LogPath = "d:\\chromedriver.log";
         service.EnableVerboseLogging = true;
 
+        Console.WriteLine("[INFO] Starting ChromeDriver...");
         IWebDriver driver = new ChromeDriver(service, options);
 
         try
