@@ -46,15 +46,11 @@ jobs:
 
     - name: Configure Chrome Enterprise Policy (Registry)
       run: |
-        # Setting a policy in this registry key forces Chrome into "Managed by your organization" mode
-        reg add HKLM\SOFTWARE\Policies\Google\Chrome /v ShowHomeButton /t REG_DWORD /d 1 /f
+        New-Item -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -Force
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -Name "ShowHomeButton" -Value 1 -Type DWord
 
     - name: Run tests
       run: dotnet test --no-restore --logger:"console;verbosity=detailed"
-
-    - name: List all files
-      if: always()
-      run: Get-ChildItem -Recurse
 
     - name: Upload Screenshots
       uses: actions/upload-artifact@v4

@@ -31,7 +31,10 @@ public class Tests
         // Running in non-headless mode to verify enterprise UI and bug manifestation.
         // options.AddArgument("--headless"); 
         options.AddArgument("--no-sandbox");
-        options.BrowserVersion = "stable";
+        
+        // We MUST use the system-installed Google Chrome instead of "stable" Chrome for Testing (CfT).
+        // CfT deliberately disables enterprise policies, preventing "Managed" mode from activating.
+        options.BinaryLocation = @"C:\Program Files\Google\Chrome\Application\chrome.exe";
 
         var service = ChromeDriverService.CreateDefaultService();
         service.LogPath = "d:\\chromedriver.log";
