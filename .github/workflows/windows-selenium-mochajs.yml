@@ -69,14 +69,13 @@ jobs:
         # Apply policies using reg.exe for maximum compatibility with both hives and architectures
         $keys = @(
             "HKLM\SOFTWARE\Policies\Google\Chrome",
-            "HKCU\SOFTWARE\Policies\Google\Chrome"
         )
         
         foreach ($key in $keys) {
             reg add "$key" /v ShowHomeButton /t REG_DWORD /d 1 /f /reg:64
-            reg add "$key" /v ShowHomeButton /t REG_DWORD /d 1 /f /reg:32
-            reg add "$key" /v EnterpriseCustomLabelForBrowser /t REG_SZ /d "\"My Test Corp\"" /f /reg:64
-            reg add "$key" /v EnterpriseCustomLabelForBrowser /t REG_SZ /d "\"My Test Corp\"" /f /reg:32
+            # reg add "$key" /v ShowHomeButton /t REG_DWORD /d 1 /f /reg:32
+            reg add "$key" /v EnterpriseCustomLabelForBrowser /t REG_SZ /d "My Test Corp" /f /reg:64
+            # reg add "$key" /v EnterpriseCustomLabelForBrowser /t REG_SZ /d "My Test Corp" /f /reg:32
         }
 
     - name: Verify Environment
