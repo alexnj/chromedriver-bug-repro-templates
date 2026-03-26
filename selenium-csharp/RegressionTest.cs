@@ -28,8 +28,8 @@ public class Tests
         var options = new ChromeOptions();
         // The bug report notes the issue occurs on Windows, possibly in Enterprise environments.
         // It's also reported for Chrome version 146.x.
-        // For reproduction, we use standard options but verify that navigation actually occurs.
-        // options.AddArgument("--headless");
+        // Running in non-headless mode to verify enterprise UI and bug manifestation.
+        // options.AddArgument("--headless"); 
         options.AddArgument("--no-sandbox");
         options.BrowserVersion = "stable";
 
@@ -41,6 +41,12 @@ public class Tests
 
         try
         {
+            // First, navigate to the policy or management page to capture proof of Enterprise mode
+            driver.Navigate().GoToUrl("chrome://management/");
+            System.Threading.Thread.Sleep(2000);
+            Screenshot enterpriseScreenshot = ((ITakesScreenshot)driver).GetScreenshot();
+            enterpriseScreenshot.SaveAsFile("enterprise_mode.png");
+
             // Bug: Web pages incorrectly display in a small frame on the home page,
             // and the URL in the address bar remains unchanged from the home page URL.
             string targetUrl = "https://www.google.com/";
@@ -48,6 +54,10 @@ public class Tests
 
             // Wait a moment for rendering (generic wait for simplicity in repro)
             System.Threading.Thread.Sleep(2000);
+
+            // Take a screenshot of the reproduction state
+            Screenshot bugReproScreenshot = ((ITakesScreenshot)driver).GetScreenshot();
+            bugReproScreenshot.SaveAsFile("bug_repro.png");
 
             string currentUrl = driver.Url;
 
