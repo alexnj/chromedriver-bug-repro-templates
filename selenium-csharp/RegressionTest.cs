@@ -32,9 +32,9 @@ public class Tests
         // options.AddArgument("--headless"); 
         options.AddArgument("--no-sandbox");
         
-        // We MUST use the system-installed Google Chrome instead of "stable" Chrome for Testing (CfT).
-        // CfT deliberately disables enterprise policies, preventing "Managed" mode from activating.
-        options.BinaryLocation = @"C:\Program Files\Google\Chrome\Application\chrome.exe";
+        // Use the system-installed Google Chrome found by CI
+        var chromePath = Environment.GetEnvironmentVariable("CHROME_PATH") ?? @"C:\Program Files\Google\Chrome\Application\chrome.exe";
+        options.BinaryLocation = chromePath;
 
         var service = ChromeDriverService.CreateDefaultService();
         service.LogPath = "d:\\chromedriver.log";
@@ -44,11 +44,15 @@ public class Tests
 
         try
         {
-            // First, navigate to the policy or management page to capture proof of Enterprise mode
+            // Diagnostics: Capture exactly which policies are active
+            driver.Navigate().GoToUrl("chrome://policy/");
+            System.Threading.Thread.Sleep(2000);
+            ((ITakesScreenshot)driver).GetScreenshot().SaveAsFile("active_policies.png");
+
+            // Capture proof of Enterprise mode
             driver.Navigate().GoToUrl("chrome://management/");
             System.Threading.Thread.Sleep(2000);
-            Screenshot enterpriseScreenshot = ((ITakesScreenshot)driver).GetScreenshot();
-            enterpriseScreenshot.SaveAsFile("enterprise_mode.png");
+            ((ITakesScreenshot)driver).GetScreenshot().SaveAsFile("enterprise_mode.png");
 
             // Bug: Web pages incorrectly display in a small frame on the home page,
             // and the URL in the address bar remains unchanged from the home page URL.
