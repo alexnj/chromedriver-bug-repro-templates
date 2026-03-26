@@ -51,18 +51,22 @@ jobs:
         Write-Host "Found Chrome at: $chromePath"
         echo "CHROME_PATH=$chromePath" >> $env:GITHUB_ENV
 
-        # Apply policy to HKLM (System) and HKCU (User) to be certain
-        $registryPaths = @("HKLM:\SOFTWARE\Policies\Google\Chrome", "HKCU:\SOFTWARE\Policies\Google\Chrome")
+        # Apply policy to HKLM, HKCU, and WOW6432Node (for 32-bit Chrome on 64-bit OS)
+        $registryPaths = @(
+            "HKLM:\SOFTWARE\Policies\Google\Chrome",
+            "HKCU:\SOFTWARE\Policies\Google\Chrome",
+            "HKLM:\SOFTWARE\WOW6432Node\Policies\Google\Chrome",
+            "HKCU:\SOFTWARE\WOW6432Node\Policies\Google\Chrome"
+        )
         foreach ($path in $registryPaths) {
             if (!(Test-Path $path)) { New-Item -Path $path -Force }
             Set-ItemProperty -Path $path -Name "ShowHomeButton" -Value 1 -Type DWord
-            # Also set a cloud management token (dummy) which often triggers the managed UI
             Set-ItemProperty -Path $path -Name "CloudManagementEnrollmentToken" -Value "repro-dummy-token" -Type String
         }
 
         # Verify registry
         reg query "HKLM\SOFTWARE\Policies\Google\Chrome"
-        reg query "HKCU\SOFTWARE\Policies\Google\Chrome"
+        reg query "HKLM\SOFTWARE\WOW6432Node\Policies\Google\Chrome"
 
     - name: Run tests
       run: dotnet test --no-restore --logger:"console;verbosity=detailed"

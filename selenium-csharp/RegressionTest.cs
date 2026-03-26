@@ -33,8 +33,18 @@ public class Tests
         options.AddArgument("--no-sandbox");
         
         // Use the system-installed Google Chrome found by CI
-        var chromePath = Environment.GetEnvironmentVariable("CHROME_PATH") ?? @"C:\Program Files\Google\Chrome\Application\chrome.exe";
+        var chromePath = Environment.GetEnvironmentVariable("CHROME_PATH");
+        if (string.IsNullOrWhiteSpace(chromePath))
+        {
+            chromePath = @"C:\Program Files\Google\Chrome\Application\chrome.exe";
+            if (!File.Exists(chromePath))
+            {
+                chromePath = @"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe";
+            }
+        }
+        
         options.BinaryLocation = chromePath;
+        Console.WriteLine($"[INFO] Launching Chrome from: {options.BinaryLocation}");
 
         var service = ChromeDriverService.CreateDefaultService();
         service.LogPath = "d:\\chromedriver.log";
